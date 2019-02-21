@@ -1,23 +1,30 @@
 package com.github.g1mmick.pasp.view;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
 
+import com.github.g1mmick.pasp.R;
+import com.github.g1mmick.pasp.model.Block;
 import com.github.g1mmick.pasp.model.Character;
 import com.github.g1mmick.pasp.utils.OnSwipeTouchListener;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class GameEngine extends SurfaceView implements Runnable {
 
     private static final long MILLIS_PER_SECOND = 1000;
     private static final long FPS = 60;
-    private static final int NUM_BLOCKS_HIGH = 9;
-    private static final int NUM_BLOCKS_WIDE = 16;
+    private static final int NUM_BLOCKS_HIGH = 5;
+    private static final int NUM_BLOCKS_WIDE = 9;
 
     private Thread thread = null;
 
@@ -33,9 +40,12 @@ public class GameEngine extends SurfaceView implements Runnable {
 
     private Canvas canvas;
     private SurfaceHolder surfaceHolder;
-    private Paint paint;
+    Bitmap bg;
+    Rect bgCut;
+    Rect bgRect;
 
     private Character player;
+    private List<Block> blocks = new ArrayList<>();
 
     public GameEngine(Context context, Point size) {
         super(context);
@@ -53,9 +63,22 @@ public class GameEngine extends SurfaceView implements Runnable {
         setLayoutParams(new ViewGroup.LayoutParams(screenX, screenY));
 
         surfaceHolder = getHolder();
-        paint = new Paint();
 
-        player = new Character(context, blockSize);
+        bg = BitmapFactory.decodeResource(context.getResources(), R.drawable.bg);
+        int bgCutWidth = Math.min(bg.getWidth(), bg.getHeight() * screenX / screenY);
+        int bgCutHeight = Math.min(bg.getHeight(), bg.getWidth() * screenY / screenX);
+        int bgCutX = (bg.getWidth() - bgCutWidth) / 2;
+        int bgCutY = (bg.getHeight() - bgCutHeight) / 2;
+        bgCut = new Rect(bgCutX, bgCutY, bgCutWidth + bgCutX, bgCutHeight + bgCutY);
+        bgRect = new Rect(0, 0, screenX, screenY);
+
+        player = new Character(BitmapFactory.decodeResource(context.getResources(), R.drawable.player), blockSize);
+        blocks.add(new Block(BitmapFactory.decodeResource(context.getResources(), R.drawable.box_block), blockSize, 0 * blockSize, 3 * blockSize));
+        blocks.add(new Block(BitmapFactory.decodeResource(context.getResources(), R.drawable.box_block), blockSize, 7 * blockSize, 2 * blockSize));
+        blocks.add(new Block(BitmapFactory.decodeResource(context.getResources(), R.drawable.box_block), blockSize, 4 * blockSize, 0 * blockSize));
+        blocks.add(new Block(BitmapFactory.decodeResource(context.getResources(), R.drawable.box_block), blockSize, 5 * blockSize, 3 * blockSize));
+        blocks.add(new Block(BitmapFactory.decodeResource(context.getResources(), R.drawable.box_block), blockSize, 3 * blockSize, 4 * blockSize));
+        blocks.add(new Block(BitmapFactory.decodeResource(context.getResources(), R.drawable.box_block), blockSize, 2 * blockSize, 1 * blockSize));
 
         setOnTouchListener(new OnSwipeTouchListener(context) {
             @Override
@@ -94,68 +117,6 @@ public class GameEngine extends SurfaceView implements Runnable {
         }
     }
 
-    private void draw() {
-        // Get a lock on the canvas
-        if (surfaceHolder.getSurface().isValid()) {
-            canvas = surfaceHolder.lockCanvas();
-
-            // Fill the screen with Game Code School blue
-            canvas.drawColor(Color.argb(255, 26, 128, 182));
-
-            // Set the color of the paint to draw the player white
-            paint.setColor(Color.argb(255, 255, 255, 255));
-
-            //canvas.drawBitmap(player.getBitmap(), player.x, player.y, paint);
-            canvas.drawBitmap(player.getBitmap(), null, player.getHitbox(), paint);
-            /*canvas.drawRect(player.x,
-                    player.y,
-                    player.x + blockSize,
-                    player.y + blockSize,
-                    paint);*/
-
-            // Unlock the canvas and reveal the graphics for this frame
-            surfaceHolder.unlockCanvasAndPost(canvas);
-        }
-    }
-
-    private void update() {
-        player.update();
-        movePlayer();
-    }
-
-    private void movePlayer() {
-        switch (player.getHeading()) {
-            case UP:
-                player.y -= player.getSpeed() * blockSize / FPS;
-                if (player.y <= 0) {
-                    player.y = 0;
-                    player.stop();
-                }
-                break;
-            case RIGHT:
-                player.x += player.getSpeed() * blockSize / FPS;
-                if (player.x >= screenX - blockSize) {
-                    player.x = screenX - blockSize;
-                    player.stop();
-                }
-                break;
-            case DOWN:
-                player.y += player.getSpeed() * blockSize / FPS;
-                if (player.y >= screenY - blockSize) {
-                    player.y = screenY - blockSize;
-                    player.stop();
-                }
-                break;
-            case LEFT:
-                player.x -= player.getSpeed() * blockSize / FPS;
-                if (player.x <= 0) {
-                    player.x = 0;
-                    player.stop();
-                }
-                break;
-        }
-    }
-
     public boolean updateRequired() {
 
         // Are we due to update the frame
@@ -171,9 +132,94 @@ public class GameEngine extends SurfaceView implements Runnable {
         return false;
     }
 
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+    }
+
+    private void draw() {
+        // Get a lock on the canvas
+        if (surfaceHolder.getSurface().isValid()) {
+            canvas = surfaceHolder.lockCanvas();
+
+            // Fill the screen
+            //canvas.drawColor(Color.argb(255, 30, 120, 190));
+            canvas.drawBitmap(bg, null, bgRect, null);
+
+            for (Block block : blocks) {
+                canvas.drawBitmap(block.getBitmap(), null, block.getHitbox(), null);
+            }
+
+            //canvas.drawBitmap(player.getBitmap(), player.x, player.y, paint);
+            canvas.drawBitmap(player.getBitmap(), null, player.getHitbox(), null);
+            /*canvas.drawRect(player.x,
+                    player.y,
+                    player.x + blockSize,
+                    player.y + blockSize,
+                    paint);*/
+
+            // Unlock the canvas and reveal the graphics for this frame
+            surfaceHolder.unlockCanvasAndPost(canvas);
+        }
+    }
+
+    private void update() {
+        player.update(FPS);
+        checkCollision();
+    }
+
+    private void checkCollision() {
+        switch (player.getHeading()) {
+            case UP:
+                if (player.getHitbox().top <= 0) {
+                    player.setY(0);
+                    player.stop();
+                }
+                break;
+            case RIGHT:
+                if (player.getHitbox().right >= screenX) {
+                    player.setX(screenX - player.getHitbox().width());
+                    player.stop();
+                }
+                break;
+            case DOWN:
+                if (player.getHitbox().bottom >= screenY) {
+                    player.setY(screenY - player.getHitbox().height());
+                    player.stop();
+                }
+                break;
+            case LEFT:
+                if (player.getHitbox().left <= 0) {
+                    player.setX(0);
+                    player.stop();
+                }
+                break;
+        }
+
+        for (Block block : blocks) {
+            if (RectF.intersects(player.getHitbox(), block.getHitbox())) {
+                switch (player.getHeading()) {
+                    case UP:
+                        player.setY(block.getHitbox().bottom);
+                        break;
+                    case RIGHT:
+                        player.setX(block.getHitbox().left - player.getHitbox().width());
+                        break;
+                    case DOWN:
+                        player.setY(block.getHitbox().top - player.getHitbox().height());
+                        break;
+                    case LEFT:
+                        player.setX(block.getHitbox().right);
+                        break;
+                }
+                player.stop();
+            }
+        }
+    }
+
     private void newGame() {
-        player.x = 0;
-        player.y = 0;
+        player.setX(0);
+        player.setY(0);
 
         nextFrameTime = System.currentTimeMillis();
     }

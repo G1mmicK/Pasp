@@ -1,61 +1,41 @@
 package com.github.g1mmick.pasp.model;
 
-import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Rect;
+import android.graphics.RectF;
 
-import com.github.g1mmick.pasp.R;
-
-public class Character {
+public class Character implements MovableObject {
 
     public enum Heading {NONE, UP, RIGHT, DOWN, LEFT}
 
     private Heading heading = Heading.NONE;
     private Heading nextHeading = Heading.NONE;
-    public int x, y;
-    private double speed = 16;
-    private int size;
-    private Rect hitbox;
+    private float x, y;
+    private float speed = 8;
+    private RectF hitbox;
     private Bitmap bitmap;
+    private int size;
 
-    public Character(Context context, int size) {
-        bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.character);
-        hitbox = new Rect(x, y, x + size, y + size);
+    public Character(Bitmap bitmap, int size) {
+        this.bitmap = bitmap;
         this.size = size;
+        hitbox = new RectF(x, y, x + size, y + size);
     }
 
-    public void update() {
-        /*switch (heading) {
+    public void update(long FPS) {
+        switch (heading) {
             case UP:
                 y -= speed * size / FPS;
-                if (player.y <= 0) {
-                    player.y = 0;
-                    player.stop();
-                }
                 break;
             case RIGHT:
-                player.x += player.getSpeed() * blockSize / FPS;
-                if (player.x >= screenX - blockSize) {
-                    player.x = screenX - blockSize;
-                    player.stop();
-                }
+                x += speed * size / FPS;
                 break;
             case DOWN:
-                player.y += player.getSpeed() * blockSize / FPS;
-                if (player.y >= screenY - blockSize) {
-                    player.y = screenY - blockSize;
-                    player.stop();
-                }
+                y += speed * size / FPS;
                 break;
             case LEFT:
-                player.x -= player.getSpeed() * blockSize / FPS;
-                if (player.x <= 0) {
-                    player.x = 0;
-                    player.stop();
-                }
+                x -= speed * size / FPS;
                 break;
-        }*/
+        }
         hitbox.set(x, y, x + size, y + size);
     }
 
@@ -96,27 +76,33 @@ public class Character {
         }
     }
 
+    public float getX() {
+        return x;
+    }
+
+    public void setX(float x) {
+        this.x = x;
+        hitbox.set(x, y, x + size, y + size);
+    }
+
+    public float getY() {
+        return y;
+    }
+
+    public void setY(float y) {
+        this.y = y;
+        hitbox.set(x, y, x + size, y + size);
+    }
+
     public Heading getHeading() {
         return heading;
-    }
-
-    public void setHeading(Heading heading) {
-        this.heading = heading;
-    }
-
-    public Heading getNextHeading() {
-        return nextHeading;
-    }
-
-    public void setNextHeading(Heading nextHeading) {
-        this.nextHeading = nextHeading;
     }
 
     public double getSpeed() {
         return speed;
     }
 
-    public Rect getHitbox() {
+    public RectF getHitbox() {
         return hitbox;
     }
 
